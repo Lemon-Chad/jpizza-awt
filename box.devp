@@ -1,0 +1,78 @@
+import awt;
+import time;
+
+bake width => 900; 
+bake height => 900;
+
+bake friction => 0.95;
+var boxSize => 75;
+var mass => boxSize / 30;
+
+awt::setSize(width, height);
+
+awt::start();
+awt::refreshLoop();
+awt::toggleQRender();
+
+var boxCoords => [0, 0];
+var lastPos => [0, 0];
+
+var velocity => [0, 0];
+
+fn dist<x1, y1, x2, y2> -> ((x1 - x2) ^ 2 + (y1 - y2) ^ 2) ^ 0.5;
+
+fn clickedBox {
+    var pos => awt::mousePos();
+    return awt::mouseDown(0) & dist(pos[0], pos[1], boxCoords[0], boxCoords[1]) < boxSize * 0.75;
+}
+
+fn getVelocity -> [(boxCoords[0] - lastPos[0]) / mass, (boxCoords[1] - lastPos[1]) / mass];
+
+fn sizeLimit<x> -> max(15, min(x, 500));
+
+var boxMulti => 1;
+bake roc => 0.03;
+
+loop {
+    awt::clear();
+    
+    if (clickedBox()) {
+        boxMulti => min(1.5, boxMulti + roc);
+        boxCoords => awt::mousePos();
+        velocity => getVelocity();
+    } else {
+        boxMulti => max(1, boxMulti - roc);
+        
+        boxCoords => [boxCoords[0] + velocity[0], boxCoords[1] + velocity[1]];
+
+        var v => [];
+        for (x <- velocity) {
+            if (x > 0)
+                v % max(0, x * friction);
+            elif (x < 0)
+                v % min(0, x * friction);
+            else
+                v % 0;
+        }
+        velocity => v;
+    }
+
+    var shiftFactor => ? awt::keyDown("shift") : 1 $_ : 0.1;
+    if (awt::keyDown("up"))
+        boxSize += shiftFactor;
+    elif (awt::keyDown("down"))
+        boxSize -= shiftFactor;
+    boxSize => sizeLimit(boxSize);
+    mass => boxSize / 30;
+
+    var trueSize => round(boxSize * boxMulti);
+    boxCoords => [min(max(trueSize / 2, boxCoords[0]), width - trueSize / 2), min(max(trueSize / 2, boxCoords[1]), height - trueSize / 2)];
+
+    lastPos => boxCoords;
+
+    awt::drawSquare(trueSize, round(boxCoords[0]), round(boxCoords[1]) + round(boxSize * (boxMulti - 1)) + 5, [122, 122, 122]);
+        awt::drawSquare(trueSize, round(boxCoords[0]), round(boxCoords[1]), [50, 50, 50]);
+
+    awt::qUpdate();
+    time::halt(5);
+}

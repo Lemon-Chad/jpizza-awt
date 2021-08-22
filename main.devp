@@ -1,0 +1,28 @@
+<> Paint Program!
+import awt;
+import time;
+
+bake width => 900; bake height => 900;
+awt::setSize(width, height);
+
+awt::start();
+awt::refreshLoop();
+awt::toggleQRender();
+
+awt::setBackgroundColor([255, 255, 255]);
+
+loop {
+    if (awt::mouseIn() & (awt::mouseDown(2) | awt::mouseDown(0))) {
+        var pos => for (x <- awt::mousePos()) => max(1, x);
+
+        awt::drawCircle(20, pos[0], pos[1], ? awt::mouseDown(0) : [
+            min(255, round(255 * pos[0] / width)),
+            min(255, round(255 * pos[1] / height)),
+            min(255, round(255 * pos[0] / pos[1]))
+        ] $_ : [255, 255, 255]);
+
+    } elif (awt::mouseDown(1)) awt::clear();
+
+    awt::qUpdate();
+    time::halt(5);
+}
