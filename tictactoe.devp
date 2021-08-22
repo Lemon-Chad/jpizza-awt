@@ -1,0 +1,123 @@
+import awt;
+import time;
+
+bake winConditions => [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+
+    [0, 4, 8],
+    [2, 4, 6]
+];
+
+bake stringKey => {
+    0: '-',
+    1: 'X',
+    2: 'O'
+};
+
+bake size => 400;
+awt::setSize(size, size);
+awt::start();
+awt::setTitle("Tic-Tac-Pizza");
+
+awt::toggleQRender();
+awt::refreshLoop();
+
+
+fn gameLoop {
+    var board => for (_ -> 0:9) => 0;
+    var fontS => round(size * 0.435);
+    bake yPad => round(fontS * 0.725);
+    bake xW => round(fontS * 0.55);
+    bake xPad => 36;
+
+    awt::setFont("Consolas", "P", fontS);
+
+    fn regionClicked<topX, topY, bottomX, bottomY> {
+        var pos => awt::mousePos();
+        return awt::mouseDown(0) & pos[0] >= topX & pos[0] <= bottomX & pos[1] >= topY & pos[1] <= bottomY;
+    }
+
+    fn drawBoard ->
+        for (j -> 0:3) {
+            var str => "";
+            for (i -> 0:3) => str += stringKey[board[j * 3 + i]];
+            awt::drawText(str, xPad, yPad * (j + 1), [50, 50, 50]);
+        }
+
+    fn mod<x, y> -> x - floor(x / y) * y;
+
+    var x => true;
+    var mouseDelay => 50;
+    var won => 0;
+
+    awt::setBackgroundColor([238, 238, 238]);
+
+    while (won == 0) {
+        awt::clear();
+
+        mouseDelay--;
+
+
+        var full => true;
+        for (i -> 0:9) {
+            <<
+            Commented out code for displaying click regions
+
+            awt::drawRect(xPad + mod(i, 3) * xW + round(xW / 2), yPad * floor(i / 3) + round(yPad / 2), xW, yPad, 
+                            [min(255, round(mod(i, 3) / 3 * 255)), min(255, round(floor(i / 3) / 3 * 255)), 0]);
+
+            <<
+
+            if (board[i] == 0) full => false;
+
+            if (mouseDelay < 0 & 
+                    regionClicked(xPad + mod(i, 3) * xW, yPad * floor(i / 3), xPad + xW * (mod(i, 3) + 1), yPad * (floor(i / 3) + 1)) 
+                    & board[i] == 0) {
+                board => for (j -> 0:9) => ? j == i : (? x : 1 $_ : 2) $_ : board[j];
+
+                var placement => ? x : 1 $_ : 2;
+                for (condition <- winConditions) {
+                    var i => 0;
+                    for (index <- condition) => if (board[index] == placement) i++;
+                    if (i == 3) {
+                        won => placement;
+                        break;
+                    }
+                }
+
+                x => !x;
+                mouseDelay => 10;
+            }
+        }
+
+        if (full) won => 3;
+        
+        drawBoard();
+
+        awt::qUpdate();
+        time::halt(5);
+    }
+
+    awt::clear();
+    awt::setBackgroundColor([252, 186, 0]);
+    var fontS => round(fontS * 0.625);
+    awt::setFont("Consolas", "B", fontS);
+
+    awt::drawText(? won == 1 : "X WINS!" $ won == 2 : "O WINS!" $_ : "TIE!", 0, size / 2, [0, 0, 0]);
+
+    awt::qUpdate();
+}
+
+fn main<args#list> -> loop {
+    gameLoop();
+    time::halt(300);
+    while (!awt::mouseDown(0)) => pass;
+}
+
+#func main;
