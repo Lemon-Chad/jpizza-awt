@@ -30,19 +30,25 @@ awt::refreshLoop();
 
 
 fn gameLoop {
+    <> Initialize board as array of 9 0s
     var board => for (_ -> 0:9) => 0;
+    <> Set font size to fit on screen based on screen scaling
     var fontS => round(size * 0.435);
+    <> Y Padding, X Width, and X Padding
     bake yPad => round(fontS * 0.725);
     bake xW => round(fontS * 0.55);
     bake xPad => 36;
 
+    <> Set font to consolas, because monospace
     awt::setFont("Consolas", "P", fontS);
 
+    <> Helper function to check if region is clicked
     fn regionClicked<topX, topY, bottomX, bottomY> {
         var pos => awt::mousePos();
         return awt::mouseDown(0) & pos[0] >= topX & pos[0] <= bottomX & pos[1] >= topY & pos[1] <= bottomY;
     }
 
+    <> Draws the board
     fn drawBoard ->
         for (j -> 0:3) {
             var str => "";
@@ -50,20 +56,27 @@ fn gameLoop {
             awt::drawText(str, xPad, yPad * (j + 1), [50, 50, 50]);
         }
 
+    <> Since modulo is broken (v1.1.03)
     fn mod<x, y> -> x - floor(x / y) * y;
 
+    <> Player is x = true
     var x => true;
+    <> Mouse delay so click isnt instant
     var mouseDelay => 50;
+    <> Who won???
     var won => 0;
 
+    <> Set background
     awt::setBackgroundColor([238, 238, 238]);
 
+    <> Main loop while nobody has won
     while (won == 0) {
         awt::clear();
 
+        <> Decrement mouse delay
         mouseDelay--;
 
-
+        <> Used to check if board is full
         var full => true;
         for (i -> 0:9) {
             <<
@@ -74,13 +87,19 @@ fn gameLoop {
 
             <<
 
-            if (board[i] == 0) full => false;
 
+            if (board[i] == 0) full => false;
+            <> If any spot is 0, full is obviously false
+
+            <> If the mouse delay is less than 0, the current space is empty, and the
+            <> current space is being clicked, run code.
             if (mouseDelay < 0 & 
                     regionClicked(xPad + mod(i, 3) * xW, yPad * floor(i / 3), xPad + xW * (mod(i, 3) + 1), yPad * (floor(i / 3) + 1)) 
                     & board[i] == 0) {
+                <> Set board position to corresponding piece
                 board => for (j -> 0:9) => ? j == i : (? x : 1 $_ : 2) $_ : board[j];
 
+                <> Check if player has won
                 var placement => ? x : 1 $_ : 2;
                 for (condition <- winConditions) {
                     var i => 0;
@@ -91,24 +110,30 @@ fn gameLoop {
                     }
                 }
 
+                <> Invert if player is x and add a mouse delay
                 x => !x;
                 mouseDelay => 10;
             }
         }
 
+        <> If the board is full, call a tie
         if (full) won => 3;
         
+        <> Draw the board
         drawBoard();
 
+        <> Update!
         awt::qUpdate();
         time::halt(5);
     }
 
+    <> Clear screen, change background to gold, recalculate font size
     awt::clear();
     awt::setBackgroundColor([252, 186, 0]);
     var fontS => round(fontS * 0.625);
     awt::setFont("Consolas", "B", fontS);
 
+    <> Draw win text and update
     awt::drawText(? won == 1 : "X WINS!" $ won == 2 : "O WINS!" $_ : "TIE!", 0, size / 2, [0, 0, 0]);
 
     awt::qUpdate();
@@ -116,8 +141,12 @@ fn gameLoop {
 
 fn main<args#list> -> loop {
     gameLoop();
+    <> Run game loop
     time::halt(300);
+    <> Pause so user can release mouse
     while (!awt::mouseDown(0)) => pass;
+    <> Wait until mouse is clicked to restart game
 }
 
 #func main;
+<> Run main function

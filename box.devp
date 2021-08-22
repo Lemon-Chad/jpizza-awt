@@ -1,50 +1,73 @@
 import awt;
 import time;
 
+<> Set screen width and height
 bake width => 900; 
 bake height => 900;
 
+<> Settings
 bake friction => 0.95;
 var boxSize => 75;
 var mass => boxSize / 30;
 
+<> Set screen size
 awt::setSize(width, height);
 
+<> Start rendering
 awt::start();
 awt::refreshLoop();
 awt::toggleQRender();
 
+<> Set box coords and lastpos for velocity and drawing
 var boxCoords => [0, 0];
 var lastPos => [0, 0];
 
 var velocity => [0, 0];
 
+
+<> Distance helper function
 fn dist<x1, y1, x2, y2> -> ((x1 - x2) ^ 2 + (y1 - y2) ^ 2) ^ 0.5;
 
+<> Helper function to test if the box is clicked
 fn clickedBox {
     var pos => awt::mousePos();
     return awt::mouseDown(0) & dist(pos[0], pos[1], boxCoords[0], boxCoords[1]) < boxSize * 0.75;
 }
 
+<> Calculate velocity based on current pos and last pos
 fn getVelocity -> [(boxCoords[0] - lastPos[0]) / mass, (boxCoords[1] - lastPos[1]) / mass];
 
+<> Limit box size
 fn sizeLimit<x> -> max(15, min(x, 500));
 
+<> Scale multiplier and multiplier rate of change
+<> Used for pick up/put down animation
 var boxMulti => 1;
 bake roc => 0.03;
 
+<> Main loop
 loop {
+    <> Clear screen
     awt::clear();
     
+    <> Check if box is clicked
     if (clickedBox()) {
+        <> Increase box size by rate of change, cap at 1.5x
+        <> Creates illusion of box being lifted
         boxMulti => min(1.5, boxMulti + roc);
+
+        <> Set the box position to the mouse position and calculate velocity.
         boxCoords => awt::mousePos();
         velocity => getVelocity();
     } else {
+        <> Decrease box size by rate of change, cap at 1.0x
+        <> Creates illusion of box being put down
         boxMulti => max(1, boxMulti - roc);
         
+        <> Add velocity to coords
         boxCoords => [boxCoords[0] + velocity[0], boxCoords[1] + velocity[1]];
 
+        <> Multiply velocity by friction to approach 0
         var v => [];
         for (x <- velocity) {
             if (x > 0)
@@ -57,22 +80,35 @@ loop {
         velocity => v;
     }
 
+    <> This code allows us to change the size of the box with the arrow keys
+    <> If holding shift, change the scale rate
     var shiftFactor => ? awt::keyDown("shift") : 1 $_ : 0.1;
+
+    <> If up arrow is held, increase box size
     if (awt::keyDown("up"))
         boxSize += shiftFactor;
+    <> If down arrow is held, decrease box size
     elif (awt::keyDown("down"))
         boxSize -= shiftFactor;
+    
+    <> Limit box size and recalculate mass
     boxSize => sizeLimit(boxSize);
     mass => boxSize / 30;
 
+    <> Get pixel size of box times scale multiplier
     var trueSize => round(boxSize * boxMulti);
+
+    <> Make sure box isn't off screen
     boxCoords => [min(max(trueSize / 2, boxCoords[0]), width - trueSize / 2), min(max(trueSize / 2, boxCoords[1]), height - trueSize / 2)];
 
+    <> Update last position
     lastPos => boxCoords;
 
+    <> Draw box and shadow
     awt::drawSquare(trueSize, round(boxCoords[0]), round(boxCoords[1]) + round(boxSize * (boxMulti - 1)) + 5, [122, 122, 122]);
-        awt::drawSquare(trueSize, round(boxCoords[0]), round(boxCoords[1]), [50, 50, 50]);
+    awt::drawSquare(trueSize, round(boxCoords[0]), round(boxCoords[1]), [50, 50, 50]);
 
+    <> Update
     awt::qUpdate();
     time::halt(5);
 }
