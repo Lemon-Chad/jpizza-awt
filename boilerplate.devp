@@ -1,0 +1,11 @@
+import awt;
+awt::init();
+
+awt::setSize(800, 800);
+awt::start();
+
+awt::refreshLoop();
+awt::toggleQRender();
+
+awt::drawCircle(100, 400, 400, [50, 50, 50]);
+awt::qUpdate();
