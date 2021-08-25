@@ -2,6 +2,8 @@
 import awt;
 import time;
 
+awt::init();
+
 bake width => 900; bake height => 900;
 awt::setSize(width, height);
 

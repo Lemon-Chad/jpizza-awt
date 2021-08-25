@@ -1,0 +1,24 @@
+import awt;
+import time;
+awt::init();
+
+awt::setSize(800, 800);
+awt::start();
+
+awt::refreshLoop();
+awt::toggleQRender();
+
+awt::setBackgroundColor([255, 255, 255]);
+
+loop {
+
+    if ((awt::mouseDown(0) | awt::mouseDown(2)) & awt::mouseIn()) {
+        var pos => awt::mousePos();
+        awt::drawCircle(25, pos[0], pos[1], ? awt::mouseDown(2) : [255, 255, 255] $_ : [50, 50, 50]);
+    }
+
+    if (awt::mouseDown(1)) awt::clear();
+
+    awt::qUpdate();
+    time::halt(5);
+}

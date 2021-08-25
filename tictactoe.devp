@@ -1,5 +1,6 @@
 import awt;
 import time;
+awt::init();
 
 bake winConditions => [
     [0, 1, 2],

@@ -1,5 +1,6 @@
 import awt;
 import time;
+awt::init();
 
 <> Set screen width and height
 bake width => 900; 
